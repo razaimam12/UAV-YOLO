@@ -30,20 +30,46 @@ with latency/FPS instrumentation, which is the systems foundation any
                         FastAPI service  →  Docker  →  (Kubernetes-ready)
 ```
 
+## Weights (required)
+
+Download YOLOv8n once and place it at `weights/yolov8n.pt` (gitignored):
+
+```bash
+mkdir -p weights
+curl -L -o weights/yolov8n.pt \
+  https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt
+```
+
 ## Quick start
 
-### Option A — Docker (recommended)
+### Option A — Docker CPU (recommended with n8n)
+
+```bash
+docker network create uav-net   # once
+docker compose -f docker-compose.cpu.yml up --build -d
+# API: http://localhost:8000/docs
+```
+
+### Option B — Docker (default compose)
 
 ```bash
 docker compose up --build
-# API now live at http://localhost:8000/docs
 ```
 
-### Option B — Local Python
+### Option C — Local Python
 
 ```bash
 pip install -r requirements.txt
 python src/detect.py --source samples/street.jpg --show-fps
+uvicorn src.app:app --host 0.0.0.0 --port 8000
+```
+
+### SOC dashboard
+
+```bash
+cd samples
+python -m http.server 8765
+# http://127.0.0.1:8765/uav-detect-result.html
 ```
 
 ## Usage

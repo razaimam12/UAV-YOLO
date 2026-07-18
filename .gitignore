@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# YOLO weights (download locally — do not commit large binaries)
+**/weights/*.pt
+*.pt
+
+# Runtime / local artifacts
+**/samples/last-result.json
+**/samples/_serve.py
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp

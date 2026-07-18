@@ -1,4 +1,4 @@
-# Samples
+﻿# Samples
 
 Drop a test image here named `street.jpg` (or any aerial/UAV image) to try the
 detector:

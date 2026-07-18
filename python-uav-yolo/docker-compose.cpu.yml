@@ -1,0 +1,29 @@
+services:
+  detector:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    image: uav-yolo-demo:cpu
+    container_name: uav-detector
+    ports:
+      - "8000:8000"
+    volumes:
+      # Host-provided weights (container has no curl / GitHub access for auto-download)
+      - ./weights/yolov8n.pt:/app/yolov8n.pt:ro
+      - ./src/app.py:/app/src/app.py:ro
+      - ./src/risk_rules.py:/app/src/risk_rules.py:ro
+      - ./samples:/app/samples:ro
+    networks:
+      - default
+      - uav-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+networks:
+  uav-net:
+    external: true

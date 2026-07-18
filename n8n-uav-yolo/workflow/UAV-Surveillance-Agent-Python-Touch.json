@@ -1,0 +1,171 @@
+{
+  "name": "UAV Surveillance Detection Agent (Python Touch)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "uav-detect",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c8ccabc6-f37e-467d-b4c5-6db53eacddd5",
+      "name": "Receive UAV Frame (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-720, 120],
+      "webhookId": "uav-detect"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://detector:8000/predict",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3a2aa375-2e56-4900-bfcf-8bf7f8cc7fab",
+      "name": "Run YOLO Detection",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-480, 120]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://detector:8000/enrich",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "a11e2222-python-enrich-0001-000000000001",
+      "name": "Python Risk Enrichment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-240, 120],
+      "notes": "Calls FastAPI /enrich (risk_rules.py) — Python analytics touch"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "27e220bd-fdbb-4c9e-8e3e-f3a50df1f853",
+      "name": "Objects Detected?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [0, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nreturn [{\n  json: {\n    success: true,\n    python_touch: d.python_touch === true,\n    engine: d.engine || 'risk_rules.py',\n    alert: d.alert === true,\n    priority: d.priority,\n    summary: d.summary,\n    latency_ms: d.latency_ms,\n    fps: d.fps,\n    class_counts: d.class_counts,\n    critical_count: d.critical_count,\n    detections: d.detections,\n    timestamp: d.timestamp || new Date().toISOString()\n  }\n}];"
+      },
+      "id": "7f3a3544-41fe-4036-9224-4ca8b6598696",
+      "name": "Build Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 20]
+    },
+    {
+      "parameters": {},
+      "id": "d4d15ea3-6169-48cf-af23-6d39d3e0cafd",
+      "name": "Send Alert (connect Email/Telegram/Slack here)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [480, 20]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nreturn [{ json: { success: true, python_touch: d.python_touch === true, alert: false, summary: d.summary || 'UAV frame: no objects detected', latency_ms: d.latency_ms, detections: d.detections || [], timestamp: new Date().toISOString() } }];"
+      },
+      "id": "5e9ef23f-9d4f-4642-9ae1-633988b41ec4",
+      "name": "No Detections",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 240]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "ca5229f5-bf29-410f-872a-85bd0bf69620",
+      "name": "Respond With Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 120]
+    },
+    {
+      "parameters": {
+        "content": "## Python touch\n\nAfter YOLO, n8n calls **Python** FastAPI:\\n`POST http://detector:8000/enrich`\\n\\nUses `risk_rules.py` for risk levels / AI scores.\\n\\nTest:\\n```\\ncurl -X POST http://localhost:5678/webhook/uav-detect -F file=@street.jpg\\n```",
+        "height": 320,
+        "width": 360,
+        "color": 5
+      },
+      "id": "note-python-touch-0001",
+      "name": "Python Touch Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-720, -200]
+    }
+  ],
+  "connections": {
+    "Receive UAV Frame (Webhook)": {
+      "main": [[{ "node": "Run YOLO Detection", "type": "main", "index": 0 }]]
+    },
+    "Run YOLO Detection": {
+      "main": [[{ "node": "Python Risk Enrichment", "type": "main", "index": 0 }]]
+    },
+    "Python Risk Enrichment": {
+      "main": [[{ "node": "Objects Detected?", "type": "main", "index": 0 }]]
+    },
+    "Objects Detected?": {
+      "main": [
+        [{ "node": "Build Alert", "type": "main", "index": 0 }],
+        [{ "node": "No Detections", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Alert": {
+      "main": [[{ "node": "Send Alert (connect Email/Telegram/Slack here)", "type": "main", "index": 0 }]]
+    },
+    "Send Alert (connect Email/Telegram/Slack here)": {
+      "main": [[{ "node": "Respond With Result", "type": "main", "index": 0 }]]
+    },
+    "No Detections": {
+      "main": [[{ "node": "Respond With Result", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

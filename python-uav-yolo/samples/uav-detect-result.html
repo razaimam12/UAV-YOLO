@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UAV AI SOC v2 — Full Intelligence Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    :root,[data-theme="dark"]{--bg0:#060a12;--bg1:#0b1220;--panel:rgba(14,22,38,.7);--line:rgba(110,168,254,.18);--text:#cddaf5;--bright:#e8f0ff;--muted:#8096b8;--blue:#6ea8fe;--cyan:#63e6be;--red:#f03e3e;--orange:#ff922b;--purple:#b197fc;--bus:#74c0fc;--truck:#ffd43b;--person:#ff8787;--font-ui:"Rajdhani",system-ui,sans-serif;--font-d:"Orbitron",sans-serif;--font-m:"JetBrains Mono",monospace;--shadow:0 18px 48px rgba(0,0,0,.45)}
+    [data-theme="light"]{--bg0:#e8eef8;--bg1:#f4f7fc;--panel:rgba(255,255,255,.82);--line:rgba(40,80,140,.16);--text:#1c2a44;--bright:#0d1830;--muted:#5a6e8c;--shadow:0 14px 36px rgba(20,40,80,.12)}
+    *{box-sizing:border-box} html,body{margin:0;min-height:100%}
+    body{font-family:var(--font-ui);color:var(--text);background:radial-gradient(1000px 520px at 8% -8%,rgba(77,142,255,.16),transparent 55%),linear-gradient(165deg,var(--bg0),var(--bg1))}
+    body.soc-wall .app{width:100%;max-width:none;margin:0;padding:.55rem}
+    body.soc-wall .side-rail{display:none}
+    body.degraded{outline:2px solid rgba(240,62,62,.45)}
+    body[data-role="commander"] .analyst-only{display:none!important}
+    .app{width:min(1560px,calc(100% - 1.4rem));margin:.75rem auto 2rem}
+    .glass{background:linear-gradient(160deg,rgba(232,240,255,.05),transparent 40%),var(--panel);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(16px);box-shadow:var(--shadow)}
+    .topbar{display:flex;flex-wrap:wrap;gap:.55rem;align-items:center;justify-content:space-between;padding:.8rem 1rem;margin-bottom:.65rem}
+    .brand{display:flex;gap:.7rem;align-items:center}
+    .brand-mark{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,rgba(77,142,255,.4),rgba(177,151,252,.15));border:1px solid rgba(110,168,254,.35);color:var(--blue)}
+    .brand h1{margin:0;font-family:var(--font-d);font-size:clamp(.88rem,1.7vw,1.12rem);color:var(--bright);letter-spacing:.04em}
+    .brand p{margin:.12rem 0 0;color:var(--muted);font-size:.88rem;font-weight:500}
+    .actions{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center}
+    .badge,.btn{display:inline-flex;align-items:center;gap:.35rem;border-radius:999px;font-weight:700;font-size:.82rem}
+    .badge{padding:.35rem .65rem;border:1px solid transparent}
+    .badge.live{background:rgba(99,230,190,.1);border-color:rgba(99,230,190,.35);color:var(--cyan)}
+    .badge.live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--cyan)}
+    .badge.priority{background:rgba(240,62,62,.15);border-color:rgba(240,62,62,.5);color:#ffc9c9;animation:pulseRed 2s ease infinite}
+    .badge.anomaly{background:rgba(255,146,43,.14);border-color:rgba(255,146,43,.45);color:#ffd8a8}
+    .badge.ok{background:rgba(99,230,190,.1);border-color:rgba(99,230,190,.35);color:var(--cyan)}
+    .badge.down{background:rgba(240,62,62,.12);border-color:rgba(240,62,62,.4);color:#ff8787}
+    .btn{border:1px solid var(--line);background:rgba(16,28,48,.75);color:var(--bright);padding:.42rem .72rem;cursor:pointer;font:inherit;transition:.18s}
+    [data-theme="light"] .btn{background:rgba(255,255,255,.88)}
+    .btn:hover{transform:translateY(-1px);border-color:rgba(110,168,254,.45)}
+    .btn.primary{background:linear-gradient(135deg,#3b7cf5,#4d8eff);border:none;color:#fff}
+    .btn.active{border-color:var(--blue);box-shadow:0 0 0 1px rgba(77,142,255,.35)}
+    .btn.tiny{padding:.22rem .45rem;font-size:.75rem}
+    .linkish{background:none;border:none;color:var(--blue);font:inherit;font-weight:700;cursor:pointer;font-family:var(--font-m);font-size:.8rem}
+    .degraded-banner{display:none;align-items:center;gap:.5rem;padding:.55rem .9rem;margin-bottom:.65rem;border-radius:12px;background:rgba(240,62,62,.14);border:1px solid rgba(240,62,62,.45);color:#ffc9c9;font-weight:700}
+    .layout{display:grid;grid-template-columns:270px 1fr;gap:.65rem}
+    .side-rail,.main{display:flex;flex-direction:column;gap:.65rem;min-width:0}
+    .panel{padding:.8rem}
+    .panel h2{margin:0 0 .55rem;font-family:var(--font-d);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:.4rem}
+    .panel h2 i{color:var(--blue)}
+    .drone-btn{width:100%;text-align:left;margin-bottom:.35rem;justify-content:flex-start}
+    .drone-btn small{display:block;font-weight:500;color:var(--muted);font-size:.76rem}
+    .health-row{display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid rgba(110,168,254,.1);font-size:.88rem;font-weight:600}
+    .health-row:last-child{border-bottom:0}
+    .filters{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;padding:.6rem .8rem}
+    .filters .label{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    .chip{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .6rem;border-radius:999px;border:1px solid var(--line);background:rgba(10,16,28,.4);font-weight:600;cursor:pointer}
+    .chip:has(input:checked){background:rgba(77,142,255,.14);border-color:rgba(110,168,254,.45)}
+    .slider{display:flex;align-items:center;gap:.4rem;margin-left:auto;font-weight:600;font-size:.86rem;color:var(--muted)}
+    .slider input{width:110px;accent-color:#4d8eff}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem}
+    .grid-3{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:.65rem}
+    .grid-2{display:grid;grid-template-columns:1.1fr 1fr;gap:.65rem}
+    .metric strong{display:block;font-family:var(--font-d);font-size:1.12rem;color:var(--bright);margin-top:.2rem}
+    .metric span{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+    .warn-text{color:#ff8787!important}
+    .score-ring{position:relative;width:96px;height:96px;margin:0 auto .45rem}
+    .score-ring svg{transform:rotate(-90deg);width:96px;height:96px}
+    .score-ring .track{fill:none;stroke:rgba(205,218,245,.08);stroke-width:9}
+    .score-ring .prog{fill:none;stroke:url(#g1);stroke-width:9;stroke-linecap:round;stroke-dasharray:289;stroke-dashoffset:289}
+    .score-center{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+    .score-center b{font-family:var(--font-d);font-size:1.15rem;color:var(--bright)}
+    .mini{font-size:.8rem;display:flex;justify-content:space-between;margin:.2rem 0;font-weight:600}
+    .bar{height:6px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+    .bar i{display:block;height:100%;background:linear-gradient(90deg,#4d8eff,var(--cyan))}
+    .bar i.low{background:linear-gradient(90deg,var(--red),var(--orange))}
+    #spark,#calib{width:100%;height:68px;display:block}
+    .donut-wrap{display:grid;grid-template-columns:auto 1fr;gap:.65rem;align-items:center}
+    .donut{position:relative;width:104px;height:104px}
+    .donut svg{width:104px;height:104px;transform:rotate(-90deg)}
+    .donut-c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+    .legend-i{display:flex;align-items:center;gap:.35rem;font-weight:600;font-size:.86rem;margin:.25rem 0}
+    .sw{width:9px;height:9px;border-radius:3px}
+    .risk-i,.alert-i{display:grid;grid-template-columns:auto 1fr auto;gap:.45rem;align-items:start;padding:.45rem;border-radius:10px;background:rgba(8,14,24,.35);border:1px solid rgba(110,168,254,.1);margin-bottom:.35rem}
+    .alert-i{grid-template-columns:1fr auto}
+    .alert-i.ack,.alert-i.snoozed{opacity:.55}
+    .tag{font-size:.68rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:.18rem .4rem;border-radius:99px}
+    .tag.critical{background:rgba(240,62,62,.16);color:#ff8787}
+    .tag.elevated,.tag.high{background:rgba(255,146,43,.16);color:#ffd8a8}
+    .tag.moderate,.tag.warning{background:rgba(255,212,59,.12);color:#ffe066}
+    .tag.low,.tag.info{background:rgba(99,230,190,.12);color:var(--cyan)}
+    .pill{display:inline-block;margin:.1rem .15rem 0 0;padding:.1rem .35rem;border-radius:6px;background:rgba(177,151,252,.14);color:#d0bfff;font-size:.7rem;font-weight:700}
+    .frame-stage{position:relative;width:100%;aspect-ratio:16/10;border-radius:12px;overflow:hidden;background:#0d1524;border:1px solid var(--line)}
+    .frame-stage img.bg{position:absolute;inset:0;width:110%;height:110%;object-fit:cover;animation:ken 18s ease-in-out infinite alternate}
+    .frame-stage canvas{position:absolute;inset:0;width:100%;height:100%}
+    .frame-stage canvas.heat{z-index:1;opacity:.55;mix-blend-mode:screen}
+    .frame-stage canvas.overlay{z-index:2}
+    .scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue),transparent);z-index:3;animation:scan 4.5s linear infinite;opacity:.5;pointer-events:none}
+    .cap{position:absolute;left:.55rem;right:.55rem;bottom:.55rem;z-index:4;display:flex;justify-content:space-between;padding:.32rem .55rem;border-radius:10px;background:rgba(8,14,24,.78);border:1px solid var(--line);font-size:.78rem;color:var(--muted)}
+    .compare{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+    .compare img{width:100%;border-radius:10px;border:1px solid var(--line);background:#0d1524;aspect-ratio:16/10;object-fit:cover}
+    table{width:100%;border-collapse:collapse;font-size:.88rem}
+    th{text-align:left;padding:.5rem .35rem;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+    td{padding:.5rem .35rem;border-bottom:1px solid rgba(110,168,254,.08);font-weight:500}
+    .cls{display:inline-flex;gap:.28rem;align-items:center;padding:.18rem .45rem;border-radius:99px;font-weight:700;font-size:.8rem;border:1px solid transparent}
+    .cls.bus{background:rgba(116,192,252,.14);border-color:rgba(116,192,252,.35);color:#a5d8ff}
+    .cls.truck{background:rgba(255,212,59,.14);border-color:rgba(255,212,59,.4);color:#ffe066}
+    .cls.person{background:rgba(255,107,107,.14);border-color:rgba(255,107,107,.35);color:#ffc9c9}
+    .mono{font-family:var(--font-m);font-size:.74rem;color:var(--muted)}
+    #map{height:200px;border-radius:12px;border:1px solid var(--line);z-index:1}
+    .timeline,.inbox,.audit{max-height:210px;overflow:auto}
+    .evt{padding:.45rem .55rem;border-radius:10px;border:1px solid rgba(110,168,254,.12);background:rgba(8,14,24,.35);font-size:.84rem;margin-bottom:.35rem}
+    .evt .t{font-family:var(--font-m);font-size:.7rem;color:var(--muted)}
+    .evt.ack{opacity:.55}
+    .notes{width:100%;min-height:58px;border-radius:10px;border:1px solid var(--line);background:rgba(8,14,24,.45);color:var(--text);padding:.5rem;font:inherit;resize:vertical}
+    .toast-stack{position:fixed;right:1rem;bottom:1rem;z-index:100;display:flex;flex-direction:column;gap:.4rem}
+    .toast{background:#12304f;border:1px solid rgba(110,168,254,.4);color:var(--bright);padding:.65rem .85rem;border-radius:12px;font-weight:700;box-shadow:var(--shadow)}
+    .toast.danger{border-color:rgba(240,62,62,.55);background:#3a1520}
+    .modal-bg,#missionIntro{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:120;display:none;place-items:center;padding:1rem}
+    .modal-bg.show,#missionIntro.show{display:grid}
+    .modal{width:min(520px,100%);padding:1rem}
+    .intro-card{text-align:center;padding:2rem 1.5rem;max-width:520px}
+    .intro-card h1{font-family:var(--font-d);color:var(--bright);letter-spacing:.06em;margin:0 0 .5rem}
+    .kbd{font-family:var(--font-m);font-size:.72rem;padding:.1rem .35rem;border-radius:5px;border:1px solid var(--line)}
+    .footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem;color:var(--muted);font-size:.84rem}
+    .rules{padding-left:1.05rem;margin:0;font-size:.88rem;font-weight:600}
+    @keyframes pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(240,62,62,.4)}50%{box-shadow:0 0 0 8px transparent}}
+    @keyframes scan{0%{top:8%;opacity:0}15%{opacity:.55}85%{opacity:.55}100%{top:90%;opacity:0}}
+    @keyframes ken{from{transform:translate(0,0) scale(1)}to{transform:translate(-6%,-3%) scale(1.08)}}
+    @media(max-width:1200px){.layout{grid-template-columns:1fr}.grid-4,.grid-3{grid-template-columns:1fr 1fr}.grid-2{grid-template-columns:1fr}}
+    @media(max-width:700px){.grid-4,.grid-3{grid-template-columns:1fr}.slider{margin-left:0;width:100%}}
+    @media print{.side-rail,.filters,.actions .btn,.toast-stack,.modal-bg,#missionIntro,.degraded-banner{display:none!important}}
+  </style>
+</head>
+<body data-role="analyst">
+<div id="degradedBanner" class="degraded-banner"><i class="fa-solid fa-triangle-exclamation"></i> DEGRADED MODE</div>
+
+<div class="app" id="dashboard">
+  <header class="glass topbar">
+    <div class="brand">
+      <div class="brand-mark"><i class="fa-solid fa-satellite"></i></div>
+      <div>
+        <h1>UAV AI SOC Platform v2</h1>
+        <p>Live WS · Tracks · Geospatial · Evidence · Voice · Recording</p>
+      </div>
+    </div>
+    <div class="actions">
+      <span class="badge live" id="liveBadge">LIVE</span>
+      <span class="badge anomaly" id="anomalyBadge">Anomaly</span>
+      <span class="badge priority" id="priorityBadge">HIGH — person</span>
+      <button class="btn role-btn active" data-role="analyst" title="Analyst mode">Analyst</button>
+      <button class="btn role-btn" data-role="commander" title="Commander mode">Commander</button>
+      <button class="btn" id="btnIntro" title="Mission start"><i class="fa-solid fa-play"></i></button>
+      <button class="btn" id="btnTheme" title="Theme (T)"><i class="fa-solid fa-circle-half-stroke"></i></button>
+      <button class="btn" id="btnSoc" title="SOC wall (F)"><i class="fa-solid fa-tv"></i></button>
+      <button class="btn" id="btnKeys" title="Shortcuts"><i class="fa-solid fa-keyboard"></i></button>
+      <button class="btn active" id="btnBeep"><i class="fa-solid fa-volume-high"></i></button>
+      <button class="btn active" id="btnVoice"><i class="fa-solid fa-comment-dots"></i></button>
+      <button class="btn" id="btnRec" title="Recording mode (R)"><i class="fa-solid fa-circle" style="color:#ff6b6b"></i> Rec</button>
+      <button class="btn analyst-only" id="btnShot"><i class="fa-solid fa-camera"></i></button>
+      <button class="btn analyst-only" id="btnAnnot"><i class="fa-solid fa-image"></i></button>
+      <button class="btn analyst-only" id="btnClip"><i class="fa-solid fa-film"></i></button>
+      <button class="btn" id="btnCase"><i class="fa-solid fa-folder-plus"></i></button>
+      <button class="btn analyst-only" id="btnZip"><i class="fa-solid fa-file-zipper"></i> ZIP</button>
+      <button class="btn primary" id="btnPdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="side-rail">
+      <section class="glass panel">
+        <h2><i class="fa-solid fa-helicopter"></i> Multi-Drone</h2>
+        <button class="btn drone-btn active" data-drone="alpha"><i class="fa-solid fa-helicopter"></i> UAV-Alpha<small>Sector North · 33.6844, 73.0479</small></button>
+        <button class="btn drone-btn" data-drone="bravo"><i class="fa-solid fa-helicopter"></i> UAV-Bravo<small>Sector East · 33.6901, 73.0550</small></button>
+        <button class="btn drone-btn" data-drone="charlie"><i class="fa-solid fa-helicopter"></i> UAV-Charlie<small>Sector Yard · 33.6780, 73.0402</small></button>
+      </section>
+      <section class="glass panel">
+        <h2><i class="fa-solid fa-heart-pulse"></i> System Health</h2>
+        <div class="health-row"><span>Detector</span><span class="badge" id="hDet">…</span></div>
+        <div class="health-row"><span>n8n</span><span class="badge" id="hN8n">…</span></div>
+        <div class="health-row"><span>Portal</span><span class="badge" id="hPortal">…</span></div>
+        <div class="health-row"><span>FPS</span><span id="hFps" class="mono">—</span></div>
+        <div class="health-row"><span>Last tick</span><span id="hTick" class="mono">—</span></div>
+      </section>
+      <section class="glass panel">
+        <h2><i class="fa-solid fa-inbox"></i> Alert Inbox</h2>
+        <div class="inbox" id="alertInbox"></div>
+      </section>
+      <section class="glass panel analyst-only">
+        <h2><i class="fa-solid fa-robot"></i> Auto-Escalate Rules</h2>
+        <ul class="rules">
+          <li>person ≥ 80% → CRITICAL</li>
+          <li>person &lt; 40% → anomaly</li>
+          <li>truck in geofence → MODERATE</li>
+          <li>count jump ≥ +2 → toast + voice</li>
+          <li>dwell ≥ 12s → loitering</li>
+          <li>detector down → DEGRADED</li>
+        </ul>
+      </section>
+      <section class="glass panel">
+        <h2><i class="fa-solid fa-clipboard-check"></i> Operator Desk</h2>
+        <button class="btn" id="btnAck" style="width:100%;margin-bottom:.35rem;justify-content:center"><i class="fa-solid fa-check"></i> Acknowledge</button>
+        <button class="btn" id="btnSnooze" style="width:100%;margin-bottom:.35rem;justify-content:center"><i class="fa-solid fa-clock"></i> Snooze 5m</button>
+        <button class="btn" id="btnUndoSnooze" style="width:100%;margin-bottom:.35rem;justify-content:center"><i class="fa-solid fa-rotate-left"></i> Undo snooze</button>
+        <textarea class="notes" id="opNotes" placeholder="Operator notes…"></textarea>
+      </section>
+    </aside>
+
+    <div class="main">
+      <section class="glass filters">
+        <span class="label"><i class="fa-solid fa-filter"></i> Filters</span>
+        <label class="chip"><input type="checkbox" name="cls" value="bus" checked /> Bus</label>
+        <label class="chip"><input type="checkbox" name="cls" value="truck" checked /> Truck</label>
+        <label class="chip"><input type="checkbox" name="cls" value="person" checked /> Person</label>
+        <div class="slider"><span>Min conf</span><input type="range" id="thr" min="0" max="100" value="0" /><output id="thrOut">0%</output></div>
+      </section>
+
+      <section class="grid-4">
+        <article class="glass panel metric"><span>Objects</span><strong id="mObj">0</strong></article>
+        <article class="glass panel metric"><span>Avg Conf</span><strong id="mConf">0%</strong></article>
+        <article class="glass panel metric"><span>Latency</span><strong id="mLat">—</strong></article>
+        <article class="glass panel metric"><span>Tracks</span><strong id="mTracks">0</strong></article>
+      </section>
+
+      <section class="grid-3">
+        <article class="glass panel">
+          <h2><i class="fa-solid fa-gauge-high"></i> AI Confidence</h2>
+          <div class="score-ring">
+            <svg viewBox="0 0 110 110"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4d8eff"/><stop offset="100%" stop-color="#63e6be"/></linearGradient></defs>
+              <circle class="track" cx="55" cy="55" r="46"/><circle class="prog" id="avgRing" cx="55" cy="55" r="46"/>
+            </svg>
+            <div class="score-center"><div><b id="avgScore">—</b><div style="font-size:.68rem;color:var(--muted)">AVG</div></div></div>
+          </div>
+          <div id="indivScores"></div>
+        </article>
+        <article class="glass panel">
+          <h2><i class="fa-solid fa-chart-line"></i> Trend <span id="trendArrow">↑</span></h2>
+          <svg id="spark" viewBox="0 0 320 70" preserveAspectRatio="none"></svg>
+          <div class="mono" id="trendTxt">—</div>
+          <div class="health-row" style="margin-top:.4rem"><span>Conf drift</span><strong id="mDrift">—</strong></div>
+        </article>
+        <article class="glass panel">
+          <h2><i class="fa-solid fa-chart-pie"></i> Classification</h2>
+          <div class="donut-wrap">
+            <div class="donut"><svg id="donutSvg" viewBox="0 0 120 120"></svg><div class="donut-c"><div><b id="donutTotal" style="font-family:var(--font-d);color:var(--bright)">0</b></div></div></div>
+            <div id="classLegend"></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid-2">
+        <article class="glass panel">
+          <h2><i class="fa-solid fa-video"></i> Live Frame + Heatmap</h2>
+          <div class="frame-stage">
+            <img class="bg" id="frameImg" src="street.jpg" alt="frame" />
+            <canvas class="heat" id="heatCanvas"></canvas>
+            <canvas class="overlay" id="boxCanvas"></canvas>
+            <div class="scan"></div>
+            <div class="cap"><span id="frameCap">—</span><span>Ken-Burns video feel</span></div>
+          </div>
+        </article>
+        <article class="glass panel">
+          <h2><i class="fa-solid fa-table-list"></i> Detection Intelligence</h2>
+          <div style="overflow:auto">
+            <table>
+              <thead><tr><th>Track</th><th>Class</th><th>Conf</th><th>Dwell</th><th>Risk</th><th>Behavior</th><th>FP</th></tr></thead>
+              <tbody id="detBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid-3">
+        <article class="glass panel"><h2><i class="fa-solid fa-shield-halved"></i> Risk</h2><div id="riskList"></div></article>
+        <article class="glass panel"><h2><i class="fa-solid fa-timeline"></i> Timeline</h2><div class="timeline" id="timeline"></div></article>
+        <article class="glass panel"><h2><i class="fa-solid fa-map-location-dot"></i> Geospatial</h2><div id="map"></div><div class="mono" id="geoTxt" style="margin-top:.4rem">—</div></article>
+      </section>
+
+      <section class="grid-3">
+        <article class="glass panel analyst-only">
+          <h2><i class="fa-solid fa-images"></i> Before / After</h2>
+          <div class="compare">
+            <div><div class="mono">Before</div><img id="beforePrev" alt="before" /></div>
+            <div><div class="mono">After (annotated)</div><img id="afterPrev" alt="after" /></div>
+          </div>
+        </article>
+        <article class="glass panel">
+          <h2><i class="fa-solid fa-flask"></i> Model Compare</h2>
+          <table><thead><tr><th>Model</th><th>Lat</th><th>mAP</th><th>FPS</th></tr></thead>
+            <tbody>
+              <tr><td>YOLOv8n ★</td><td>86</td><td>37.3</td><td>11.6</td></tr>
+              <tr><td>YOLOv8s</td><td>142</td><td>44.9</td><td>7.1</td></tr>
+              <tr><td>YOLOv8m</td><td>228</td><td>50.2</td><td>4.4</td></tr>
+            </tbody>
+          </table>
+          <svg id="calib" viewBox="0 0 320 70" preserveAspectRatio="none" style="margin-top:.5rem"></svg>
+          <div class="mono">Calibration curve</div>
+        </article>
+        <article class="glass panel">
+          <h2><i class="fa-solid fa-mountain-sun"></i> Aerial + Evidence</h2>
+          <div class="health-row"><span>Small-object %</span><strong id="mSmall">—</strong></div>
+          <div class="health-row"><span>Avg box area</span><strong id="mArea" class="mono">—</strong></div>
+          <div class="health-row"><span>Geofence hits</span><strong id="mFence">0</strong></div>
+          <div class="health-row"><span>Cases</span><strong id="mCases">0</strong></div>
+          <div class="health-row"><span>FP feedback</span><strong id="mFP">0</strong></div>
+          <h2 style="margin-top:.7rem"><i class="fa-solid fa-scroll"></i> Audit</h2>
+          <div class="audit" id="auditLog"></div>
+        </article>
+      </section>
+
+      <footer class="footer">
+        <div>Workflow <strong style="color:var(--bright)">uHkk2tXLOH5W3qCW</strong> · <span class="kbd">T</span> <span class="kbd">F</span> <span class="kbd">A</span> <span class="kbd">S</span> <span class="kbd">U</span> <span class="kbd">E</span> <span class="kbd">Z</span> <span class="kbd">R</span> <span class="kbd">C</span></div>
+        <div id="footStatus">Booting…</div>
+      </footer>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toasts"></div>
+<div class="modal-bg" id="keysModal">
+  <div class="glass modal">
+    <h2 style="font-family:var(--font-d);font-size:.8rem;color:var(--muted);letter-spacing:.08em">SHORTCUTS</h2>
+    <p><span class="kbd">T</span> theme · <span class="kbd">F</span> SOC · <span class="kbd">A</span> ack · <span class="kbd">S</span> snooze · <span class="kbd">U</span> undo snooze</p>
+    <p><span class="kbd">E</span> PDF · <span class="kbd">Z</span> ZIP pack · <span class="kbd">C</span> case · <span class="kbd">R</span> recording</p>
+    <button class="btn primary" id="closeKeys">Close</button>
+  </div>
+</div>
+<div id="missionIntro">
+  <div class="glass intro-card">
+    <div style="font-size:2rem;color:var(--cyan);margin-bottom:.6rem"><i class="fa-solid fa-satellite"></i></div>
+    <h1>MISSION START</h1>
+    <p style="color:var(--muted);font-weight:600">UAV AI surveillance channel online · tracks armed · geofence hot</p>
+  </div>
+</div>
+
+<script src="soc-engine.js"></script>
+<script>SocApp.boot();</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# CPU-only image for the UAV detection API (faster build, no CUDA).
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install CPU torch first, then the rest (avoids multi-GB CUDA wheels)
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu \
+        torch torchvision \
+ && pip install --no-cache-dir \
+        ultralytics==8.2.0 \
+        fastapi==0.111.0 \
+        "uvicorn[standard]==0.30.1" \
+        python-multipart==0.0.9 \
+        opencv-python-headless==4.10.0.84 \
+        pillow==10.3.0
+
+COPY src/ ./src/
+
+RUN useradd --create-home appuser
+USER appuser
+
+EXPOSE 8000
+CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]
