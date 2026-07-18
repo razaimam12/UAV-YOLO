@@ -1,0 +1,8 @@
+# GitHub Linguist: show Python as the primary language.
+# Large SOC UI (HTML/JS) and n8n workflow JSON would otherwise dominate.
+
+*.html linguist-documentation
+*.js linguist-documentation
+n8n-uav-yolo/workflow/*.json linguist-generated
+n8n-uav-yolo/** linguist-vendored
+python-uav-yolo/**/*.py linguist-detectable=true
