@@ -1,0 +1,8 @@
+#!/bin/sh
+# Remove Cursor / cursoragent co-author lines from every commit message.
+msg="$1"
+[ -n "$msg" ] && [ -f "$msg" ] || exit 0
+tmp="$msg.strip"
+grep -v -E 'Co-authored-by:[[:space:]]*Cursor|cursoragent@cursor\.com' "$msg" > "$tmp"
+mv "$tmp" "$msg"
+exit 0
