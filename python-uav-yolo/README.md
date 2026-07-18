@@ -1,38 +1,63 @@
-# UAV Real-Time Multi-Object Detection (Demo)
+# UAV YOLO Surveillance Agent — Python (FastAPI) Method
 
-A containerized, real-time multi-object detection service for UAV / aerial
-surveillance footage. Built with **YOLOv8 (Ultralytics)**, served through a
-**FastAPI** inference API, and packaged to run reproducibly in **Docker** — a
-minimal, working slice of a larger research system on real-time AI-based
-multi-object detection and classification for UAV surveillance.
+Standalone **Python** implementation of the UAV YOLO Surveillance Agent.
 
-This repository is intentionally small. Its purpose is to demonstrate an
-end-to-end path from model → optimized inference → containerized service,
-with latency/FPS instrumentation, which is the systems foundation any
-*real-time* UAV pipeline depends on.
+> This project uses **FastAPI** (with **Uvicorn**). It does **not** use Flask.
 
-## What it does
+> **Disclaimer:** Demo / research use. Validate detections before any operational decision.
 
-- Runs YOLOv8 object detection on an image, a video file, or a live stream.
-- Reports **per-frame latency and FPS**, so real-time performance is measurable.
-- Exposes a **FastAPI `/predict` endpoint** that returns detections as JSON.
-- Ships as a **Docker image** and a `docker-compose` stack for one-command run.
+---
 
-## Architecture
+## Technology stack
+
+| Component | What we use | Why |
+| --- | --- | --- |
+| Web framework | **FastAPI** | Modern async Python API + WebSocket |
+| Server | **Uvicorn** | Runs the FastAPI ASGI app |
+| Detection | **Ultralytics YOLOv8** | Real-time multi-object detection |
+| Runtime | **PyTorch** | Model inference |
+| Imaging | **Pillow**, **NumPy** | Load and process frames |
+| Risk logic | **`risk_rules.py`** | Critical / Elevated / Moderate scoring |
+| Containers | **Docker / docker-compose** | Reproducible CPU (or GPU) deploy |
+| Tests | **pytest** | Risk-rule unit tests |
+| Dashboard | **HTML + JavaScript** | Optional SOC UI in `samples/` |
+
+---
+
+## Project layout
 
 ```
-          ┌─────────────┐     ┌──────────────┐     ┌────────────────┐
- input →  │  Pre-proc   │ →   │  YOLOv8      │ →   │  Post-proc /   │ → detections
- frame    │  (resize)   │     │  inference   │     │  annotate      │   + latency
-          └─────────────┘     └──────────────┘     └────────────────┘
-                                     │
-                                     ▼
-                        FastAPI service  →  Docker  →  (Kubernetes-ready)
+python-uav-yolo/
+├── src/
+│   ├── app.py              # FastAPI: /predict, /enrich, /ws/stream
+│   ├── detect.py           # CLI detection + FPS
+│   └── risk_rules.py       # Risk scoring helpers
+├── samples/
+│   ├── street.jpg          # Sample frame
+│   ├── uav-detect-result.html
+│   └── soc-engine.js       # SOC dashboard engine
+├── tests/
+│   └── test_risk_rules.py
+├── weights/                # Put yolov8n.pt here (gitignored)
+├── Dockerfile
+├── Dockerfile.cpu
+├── docker-compose.yml
+├── docker-compose.cpu.yml
+├── requirements.txt
+└── LICENSE
 ```
 
-## Weights (required)
+---
 
-Download YOLOv8n once and place it at `weights/yolov8n.pt` (gitignored):
+## Step-by-step setup
+
+### 1. Open the folder
+
+```bash
+cd python-uav-yolo
+```
+
+### 2. Download weights
 
 ```bash
 mkdir -p weights
@@ -40,71 +65,79 @@ curl -L -o weights/yolov8n.pt \
   https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt
 ```
 
-## Quick start
-
-### Option A — Docker CPU (recommended with n8n)
+### 3A. Docker CPU (recommended with n8n)
 
 ```bash
-docker network create uav-net   # once
+docker network create uav-net
 docker compose -f docker-compose.cpu.yml up --build -d
-# API: http://localhost:8000/docs
 ```
 
-### Option B — Docker (default compose)
+### 3B. Local Python
 
-```bash
-docker compose up --build
-```
+**Windows (PowerShell):**
 
-### Option C — Local Python
-
-```bash
+```powershell
+python -m venv .venv
+.\.venv\Scripts\activate
 pip install -r requirements.txt
-python src/detect.py --source samples/street.jpg --show-fps
 uvicorn src.app:app --host 0.0.0.0 --port 8000
 ```
 
-### SOC dashboard
+**macOS / Linux:**
 
 ```bash
-cd samples
-python -m http.server 8765
-# http://127.0.0.1:8765/uav-detect-result.html
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn src.app:app --host 0.0.0.0 --port 8000
 ```
 
-## Usage
+### 4. Verify
 
-Detect on an image and print timing:
-
-```bash
-python src/detect.py --source path/to/aerial.jpg --model yolov8n.pt --show-fps
-```
-
-Detect on a video / RTSP stream:
-
-```bash
-python src/detect.py --source rtsp://your-drone-stream --model yolov8n.pt
-```
-
-Call the running API:
+- Docs: <http://localhost:8000/docs>
+- Health: <http://localhost:8000/health>
 
 ```bash
 curl -X POST "http://localhost:8000/predict" \
   -F "file=@samples/street.jpg"
 ```
 
-## Roadmap (research direction)
+CLI:
 
-- [ ] Fine-tune on aerial small-object datasets (VisDrone, DOTA).
-- [ ] Export to ONNX / TensorRT for NVIDIA Jetson edge deployment.
-- [ ] Kubernetes deployment with GPU scheduling + horizontal autoscaling.
-- [ ] Automated retrain → evaluate → roll-out pipeline.
+```bash
+python src/detect.py --source samples/street.jpg --show-fps
+```
 
-## Tech stack
+### 5. SOC dashboard (optional)
 
-Python · PyTorch · Ultralytics YOLOv8 · FastAPI · Docker · (Kubernetes-ready)
+```bash
+cd samples
+python -m http.server 8765
+```
+
+Open: <http://127.0.0.1:8765/uav-detect-result.html>
 
 ---
 
-*Author: Raza — MS Information Technology, RHCSA. 18 years in server/platform
-management, containers, orchestration, and networking.*
+## API endpoints
+
+| Method + Path | Purpose |
+| --- | --- |
+| `GET  /health` | Liveness / readiness |
+| `GET  /api/meta` | Model metadata for SOC UI |
+| `POST /predict` | Image upload → detections JSON |
+| `POST /enrich` | Risk scoring on detection payload |
+| `WS   /ws/stream` | Live detection stream |
+
+---
+
+## Roadmap (research direction)
+
+- [ ] Fine-tune on aerial small-object datasets (VisDrone, DOTA)
+- [ ] Export to ONNX / TensorRT for NVIDIA Jetson edge deployment
+- [ ] Kubernetes deployment with GPU scheduling + horizontal autoscaling
+- [ ] Automated retrain → evaluate → roll-out pipeline
+
+---
+
+*Author: Raza — MS Information Technology, RHCSA. 18 years in server/platform management, containers, orchestration, and networking.*
